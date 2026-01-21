@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-  User, Calendar, Users, BookOpen, MapPin, Clock, Bell, Settings, LogOut,
+  User, Calendar, Users, BookOpen, MapPin, Clock,  Settings, LogOut,
   Plus, Edit, Trash2, Filter, Search, Star, ChevronDown, ChevronRight,
-  Home, FileText, Upload, Download, BarChart3, Grid, AlertCircle, CheckCircle,
-  X, Save, Eye, EyeOff, Lock, RefreshCw, Send, MessageSquare, Building,
-  GraduationCap, Computer, FlaskConical, Presentation, Phone, Mail, ArrowRight,
+ Upload, Download, BarChart3, Grid, AlertCircle, CheckCircle,
+  X, Save, Eye, EyeOff, Lock, RefreshCw, Send, Building,
+  GraduationCap, Computer, Presentation, Mail, ArrowRight,
   Info, ChevronUp,
-  TrendingUp, PieChart, Activity
+   Activity
 } from 'lucide-react';
 
 // ==================== IMPORTS FROM ORGANIZED STRUCTURE ====================
 import APIService from './services/APIService';
 import { useAuth } from './hooks/useAuth';
-import { AppContext, useApp } from './context/AppContext';
+import { AppContext } from './context/AppContext';
 import {
   LoadingSpinner,
   Button,
@@ -24,417 +24,415 @@ import {
 
 // 3. Enhanced Dashboard with Real-time Features
 // Enhanced Dashboard with Real-time Features - FIXED VERSION
-const EnhancedDashboard = () => {
-  const { user } = useAuth();
-  const [realTimeData, setRealTimeData] = useState(null);
-  const [optimizationSuggestions, setOptimizationSuggestions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedBatch, setSelectedBatch] = useState('CS2023');
-  const [showOptimizationModal, setShowOptimizationModal] = useState(false);
-  const [activeOptimization, setActiveOptimization] = useState(null);
+// const EnhancedDashboard = () => {
+//   const { user } = useAuth();
+//   const [realTimeData, setRealTimeData] = useState(null);
+//   const [optimizationSuggestions, setOptimizationSuggestions] = useState([]);
+//   const [loading, setLoading] = useState(true);
+//   const [selectedBatch, setSelectedBatch] = useState('CS2023');
+//   const [showOptimizationModal, setShowOptimizationModal] = useState(false);
+//   const [activeOptimization, setActiveOptimization] = useState(null);
 
-  const api = new APIService();
+//   const api = useMemo(() => new APIService(), []);
 
-  useEffect(() => {
-    loadRealTimeData();
-    if (user?.role === 'admin') {
-      loadOptimizationSuggestions();
-    }
+//   const loadRealTimeData = useCallback(async () => {
+//     try {
+//       const data = await api.getRealTimeDashboard();
+//       console.log('Real-time data loaded:', data);
+//       setRealTimeData(data);
+//     } catch (error) {
+//       console.error('Failed to load real-time data:', error);
+//       setRealTimeData({
+//         metrics: [
+//           { metric_type: 'leave_requests', pending_count: 0, active_count: 0, total_count: 0 },
+//           { metric_type: 'reschedule_queue', pending_count: 0, active_count: 0, total_count: 0 },
+//           { metric_type: 'conflicts', pending_count: 0, active_count: 0, total_count: 0 }
+//         ],
+//         conflicts: [],
+//         recentChanges: []
+//       });
+//     } finally {
+//       setLoading(false);
+//     }
+//   }, [api]);
 
-    // Refresh data every 30 seconds
-    const interval = setInterval(() => {
-      if (!activeOptimization) {
-        loadRealTimeData();
-      }
-    }, 30000);
+//   const loadOptimizationSuggestions = useCallback(async () => {
+//     if (user?.role !== 'admin') return;
 
-    return () => clearInterval(interval);
-  }, [selectedBatch]);
+//     try {
+//       console.log('Loading optimization suggestions for batch:', selectedBatch);
+//       const suggestions = await api.getOptimizationSuggestions(selectedBatch);
+//       console.log('Optimization suggestions loaded:', suggestions);
+//       setOptimizationSuggestions(suggestions || []);
+//     } catch (error) {
+//       console.error('Failed to load optimization suggestions:', error);
+//       setOptimizationSuggestions([]);
+//     }
+//   }, [api, selectedBatch, user]);
 
-  const loadRealTimeData = async () => {
-    try {
-      const data = await api.getRealTimeDashboard();
-      console.log('Real-time data loaded:', data);
-      setRealTimeData(data);
-    } catch (error) {
-      console.error('Failed to load real-time data:', error);
-      // Set default empty data
-      setRealTimeData({
-        metrics: [
-          { metric_type: 'leave_requests', pending_count: 0, active_count: 0, total_count: 0 },
-          { metric_type: 'reschedule_queue', pending_count: 0, active_count: 0, total_count: 0 },
-          { metric_type: 'conflicts', pending_count: 0, active_count: 0, total_count: 0 }
-        ],
-        conflicts: [],
-        recentChanges: []
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+//   useEffect(() => {
+//     loadRealTimeData();
+//     if (user?.role === 'admin') {
+//       loadOptimizationSuggestions();
+//     }
 
-  const loadOptimizationSuggestions = async () => {
-    if (user?.role !== 'admin') return;
+//     const interval = setInterval(() => {
+//       if (!activeOptimization) {
+//         loadRealTimeData();
+//       }
+//     }, 30000);
 
-    try {
-      console.log('Loading optimization suggestions for batch:', selectedBatch);
-      const suggestions = await api.getOptimizationSuggestions(selectedBatch);
-      console.log('Optimization suggestions loaded:', suggestions);
-      setOptimizationSuggestions(suggestions || []);
-    } catch (error) {
-      console.error('Failed to load optimization suggestions:', error);
-      setOptimizationSuggestions([]);
-    }
-  };
+//     return () => clearInterval(interval);
+//   }, [loadRealTimeData, loadOptimizationSuggestions, user, activeOptimization]);
 
-  const handleOptimization = async (optimizationType) => {
-    if (!window.confirm(`Are you sure you want to run ${optimizationType} optimization? This will modify the timetable.`)) {
-      return;
-    }
+//   const handleOptimization = async (optimizationType) => {
+//     if (!window.confirm(`Are you sure you want to run ${optimizationType} optimization? This will modify the timetable.`)) {
+//       return;
+//     }
 
-    setActiveOptimization(optimizationType);
+//     setActiveOptimization(optimizationType);
 
-    try {
-      console.log('Starting optimization:', optimizationType);
+//     try {
+//       console.log('Starting optimization:', optimizationType);
 
-      const result = await api.applyOptimization({
-        batch: selectedBatch,
-        academic_year: '2024-25',
-        optimization_type: optimizationType
-      });
+//       const result = await api.applyOptimization({
+//         batch: selectedBatch,
+//         academic_year: '2024-25',
+//         optimization_type: optimizationType
+//       });
 
-      console.log('Optimization result:', result);
+//       console.log('Optimization result:', result);
 
-      alert(`✅ Optimization completed!\n\n` +
-        `Score: ${result.stats.optimization_score}%\n` +
-        `Improvements: ${result.stats.improvements_made}\n` +
-        `Gaps Reduced: ${result.stats.gaps_reduced}\n` +
-        `Utilization Improved: ${result.stats.utilization_improved}%`);
+//       alert(`✅ Optimization completed!\n\n` +
+//         `Score: ${result.stats.optimization_score}%\n` +
+//         `Improvements: ${result.stats.improvements_made}\n` +
+//         `Gaps Reduced: ${result.stats.gaps_reduced}\n` +
+//         `Utilization Improved: ${result.stats.utilization_improved}%`);
 
-      // Reload data
-      await loadRealTimeData();
-      await loadOptimizationSuggestions();
-      setShowOptimizationModal(false);
-    } catch (error) {
-      console.error('Optimization failed:', error);
-      alert('❌ Optimization failed: ' + error.message);
-    } finally {
-      setActiveOptimization(null);
-    }
-  };
+//       // Reload data
+//       await loadRealTimeData();
+//       await loadOptimizationSuggestions();
+//       setShowOptimizationModal(false);
+//     } catch (error) {
+//       console.error('Optimization failed:', error);
+//       alert('❌ Optimization failed: ' + error.message);
+//     } finally {
+//       setActiveOptimization(null);
+//     }
+//   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading dashboard...</p>
-        </div>
-      </div>
-    );
-  }
+//   if (loading) {
+//     return (
+//       <div className="flex items-center justify-center h-64">
+//         <div className="text-center">
+//           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+//           <p className="mt-4 text-gray-600">Loading dashboard...</p>
+//         </div>
+//       </div>
+//     );
+//   }
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Enhanced Smart Dashboard</h1>
-          <p className="text-gray-600">Real-time insights and dynamic optimization</p>
-        </div>
-        <div className="flex items-center space-x-3">
-          <div className="flex items-center space-x-2 px-3 py-2 bg-green-50 rounded-lg">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span className="text-sm text-green-700 font-medium">Live</span>
-          </div>
-          <select
-            value={selectedBatch}
-            onChange={(e) => setSelectedBatch(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-          >
-            <option value="CS2023">CS 2023</option>
-            <option value="MATH2023">Math 2023</option>
-            <option value="PHY2023">Physics 2023</option>
-          </select>
-        </div>
-      </div>
+//   return (
+//     <div className="space-y-6">
+//       {/* Header */}
+//       <div className="flex items-center justify-between">
+//         <div>
+//           <h1 className="text-3xl font-bold text-gray-900">Enhanced Smart Dashboard</h1>
+//           <p className="text-gray-600">Real-time insights and dynamic optimization</p>
+//         </div>
+//         <div className="flex items-center space-x-3">
+//           <div className="flex items-center space-x-2 px-3 py-2 bg-green-50 rounded-lg">
+//             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+//             <span className="text-sm text-green-700 font-medium">Live</span>
+//           </div>
+//           <select
+//             value={selectedBatch}
+//             onChange={(e) => setSelectedBatch(e.target.value)}
+//             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+//           >
+//             <option value="CS2023">CS 2023</option>
+//             <option value="MATH2023">Math 2023</option>
+//             <option value="PHY2023">Physics 2023</option>
+//           </select>
+//         </div>
+//       </div>
 
-      {/* Real-time Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {realTimeData?.metrics && realTimeData.metrics.length > 0 ? (
-          realTimeData.metrics.map((metric, index) => (
-            <Card key={index} className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 capitalize">
-                    {metric.metric_type.replace(/_/g, ' ')}
-                  </p>
-                  <div className="flex items-center space-x-2 mt-2">
-                    <span className="text-2xl font-bold text-gray-900">
-                      {metric.pending_count || 0}
-                    </span>
-                    {metric.active_count > 0 && (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                        {metric.active_count} active
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${metric.pending_count > 0 ? 'bg-orange-100' : 'bg-green-100'
-                  }`}>
-                  {metric.metric_type === 'leave_requests' && <Calendar className="w-6 h-6 text-orange-600" />}
-                  {metric.metric_type === 'reschedule_queue' && <RefreshCw className="w-6 h-6 text-blue-600" />}
-                  {metric.metric_type === 'conflicts' && <AlertCircle className="w-6 h-6 text-red-600" />}
-                </div>
-              </div>
-            </Card>
-          ))
-        ) : (
-          <>
-            <Card className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Leave Requests</p>
-                  <span className="text-2xl font-bold text-gray-900">0</span>
-                </div>
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <Calendar className="w-6 h-6 text-green-600" />
-                </div>
-              </div>
-            </Card>
-            <Card className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Reschedule Queue</p>
-                  <span className="text-2xl font-bold text-gray-900">0</span>
-                </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <RefreshCw className="w-6 h-6 text-blue-600" />
-                </div>
-              </div>
-            </Card>
-            <Card className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Conflicts</p>
-                  <span className="text-2xl font-bold text-gray-900">0</span>
-                </div>
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <AlertCircle className="w-6 h-6 text-green-600" />
-                </div>
-              </div>
-            </Card>
-          </>
-        )}
-      </div>
+//       {/* Real-time Metrics */}
+//       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+//         {realTimeData?.metrics && realTimeData.metrics.length > 0 ? (
+//           realTimeData.metrics.map((metric, index) => (
+//             <Card key={index} className="p-6">
+//               <div className="flex items-center justify-between">
+//                 <div>
+//                   <p className="text-sm font-medium text-gray-600 capitalize">
+//                     {metric.metric_type.replace(/_/g, ' ')}
+//                   </p>
+//                   <div className="flex items-center space-x-2 mt-2">
+//                     <span className="text-2xl font-bold text-gray-900">
+//                       {metric.pending_count || 0}
+//                     </span>
+//                     {metric.active_count > 0 && (
+//                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+//                         {metric.active_count} active
+//                       </span>
+//                     )}
+//                   </div>
+//                 </div>
+//                 <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${metric.pending_count > 0 ? 'bg-orange-100' : 'bg-green-100'
+//                   }`}>
+//                   {metric.metric_type === 'leave_requests' && <Calendar className="w-6 h-6 text-orange-600" />}
+//                   {metric.metric_type === 'reschedule_queue' && <RefreshCw className="w-6 h-6 text-blue-600" />}
+//                   {metric.metric_type === 'conflicts' && <AlertCircle className="w-6 h-6 text-red-600" />}
+//                 </div>
+//               </div>
+//             </Card>
+//           ))
+//         ) : (
+//           <>
+//             <Card className="p-6">
+//               <div className="flex items-center justify-between">
+//                 <div>
+//                   <p className="text-sm font-medium text-gray-600">Leave Requests</p>
+//                   <span className="text-2xl font-bold text-gray-900">0</span>
+//                 </div>
+//                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+//                   <Calendar className="w-6 h-6 text-green-600" />
+//                 </div>
+//               </div>
+//             </Card>
+//             <Card className="p-6">
+//               <div className="flex items-center justify-between">
+//                 <div>
+//                   <p className="text-sm font-medium text-gray-600">Reschedule Queue</p>
+//                   <span className="text-2xl font-bold text-gray-900">0</span>
+//                 </div>
+//                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+//                   <RefreshCw className="w-6 h-6 text-blue-600" />
+//                 </div>
+//               </div>
+//             </Card>
+//             <Card className="p-6">
+//               <div className="flex items-center justify-between">
+//                 <div>
+//                   <p className="text-sm font-medium text-gray-600">Conflicts</p>
+//                   <span className="text-2xl font-bold text-gray-900">0</span>
+//                 </div>
+//                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+//                   <AlertCircle className="w-6 h-6 text-green-600" />
+//                 </div>
+//               </div>
+//             </Card>
+//           </>
+//         )}
+//       </div>
 
-      {/* Optimization Panel */}
-      {user?.role === 'admin' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Smart Optimization</h2>
-              <button
-                onClick={() => setShowOptimizationModal(true)}
-                disabled={activeOptimization}
-                className={`inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeOptimization
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                  }`}
-              >
-                {activeOptimization ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Optimizing...
-                  </>
-                ) : (
-                  <>
-                    <TrendingUp className="w-4 h-4 mr-2" />
-                    Run Optimization
-                  </>
-                )}
-              </button>
-            </div>
+//       {/* Optimization Panel */}
+//       {user?.role === 'admin' && (
+//         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+//           <Card className="p-6">
+//             <div className="flex items-center justify-between mb-4">
+//               <h2 className="text-lg font-semibold text-gray-900">Smart Optimization</h2>
+//               <button
+//                 onClick={() => setShowOptimizationModal(true)}
+//                 disabled={activeOptimization}
+//                 className={`inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeOptimization
+//                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+//                     : 'bg-indigo-600 text-white hover:bg-indigo-700'
+//                   }`}
+//               >
+//                 {activeOptimization ? (
+//                   <>
+//                     <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+//                     Optimizing...
+//                   </>
+//                 ) : (
+//                   <>
+//                     <TrendingUp className="w-4 h-4 mr-2" />
+//                     Run Optimization
+//                   </>
+//                 )}
+//               </button>
+//             </div>
 
-            <div className="space-y-4">
-              {optimizationSuggestions && optimizationSuggestions.length > 0 ? (
-                optimizationSuggestions.map((suggestion, index) => (
-                  <div key={index} className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <div className="flex items-start space-x-3">
-                      <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                      <div className="flex-1">
-                        <h3 className="font-medium text-blue-900">
-                          {suggestion.details?.description || 'Optimization available'}
-                        </h3>
-                        <p className="text-sm text-blue-700 mt-1">
-                          Priority: <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${suggestion.details?.priority === 'high' ? 'bg-red-100 text-red-800' :
-                              suggestion.details?.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-blue-100 text-blue-800'
-                            }`}>
-                            {suggestion.details?.priority || 'low'}
-                          </span>
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-500" />
-                  <p className="font-medium">No optimization suggestions</p>
-                  <p className="text-sm mt-1">Your timetable is well optimized!</p>
-                </div>
-              )}
-            </div>
-          </Card>
+//             <div className="space-y-4">
+//               {optimizationSuggestions && optimizationSuggestions.length > 0 ? (
+//                 optimizationSuggestions.map((suggestion, index) => (
+//                   <div key={index} className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+//                     <div className="flex items-start space-x-3">
+//                       <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+//                       <div className="flex-1">
+//                         <h3 className="font-medium text-blue-900">
+//                           {suggestion.details?.description || 'Optimization available'}
+//                         </h3>
+//                         <p className="text-sm text-blue-700 mt-1">
+//                           Priority: <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${suggestion.details?.priority === 'high' ? 'bg-red-100 text-red-800' :
+//                               suggestion.details?.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+//                                 'bg-blue-100 text-blue-800'
+//                             }`}>
+//                             {suggestion.details?.priority || 'low'}
+//                           </span>
+//                         </p>
+//                       </div>
+//                     </div>
+//                   </div>
+//                 ))
+//               ) : (
+//                 <div className="text-center py-8 text-gray-500">
+//                   <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-500" />
+//                   <p className="font-medium">No optimization suggestions</p>
+//                   <p className="text-sm mt-1">Your timetable is well optimized!</p>
+//                 </div>
+//               )}
+//             </div>
+//           </Card>
 
-          <Card className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Changes</h2>
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {realTimeData?.recentChanges && realTimeData.recentChanges.length > 0 ? (
-                realTimeData.recentChanges.map((change, index) => (
-                  <div key={index} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                    <div className={`w-2 h-2 rounded-full mt-2 ${change.change_type === 'rescheduled' ? 'bg-orange-500' :
-                        change.change_type === 'modified' ? 'bg-blue-500' :
-                          change.change_type === 'cancelled' ? 'bg-red-500' : 'bg-green-500'
-                      }`}></div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900">
-                        {change.subject_name || 'System Update'}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {change.change_type} - {change.day_of_week} {change.time_slot}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {new Date(change.created_at).toLocaleString()}
-                      </p>
-                    </div>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${change.change_type === 'rescheduled' ? 'bg-orange-100 text-orange-800' :
-                        change.change_type === 'modified' ? 'bg-blue-100 text-blue-800' :
-                          change.change_type === 'cancelled' ? 'bg-red-100 text-red-800' :
-                            'bg-green-100 text-green-800'
-                      }`}>
-                      {change.change_type}
-                    </span>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <Clock className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                  <p className="text-sm">No recent changes</p>
-                </div>
-              )}
-            </div>
-          </Card>
-        </div>
-      )}
+//           <Card className="p-6">
+//             <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Changes</h2>
+//             <div className="space-y-3 max-h-96 overflow-y-auto">
+//               {realTimeData?.recentChanges && realTimeData.recentChanges.length > 0 ? (
+//                 realTimeData.recentChanges.map((change, index) => (
+//                   <div key={index} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+//                     <div className={`w-2 h-2 rounded-full mt-2 ${change.change_type === 'rescheduled' ? 'bg-orange-500' :
+//                         change.change_type === 'modified' ? 'bg-blue-500' :
+//                           change.change_type === 'cancelled' ? 'bg-red-500' : 'bg-green-500'
+//                       }`}></div>
+//                     <div className="flex-1 min-w-0">
+//                       <p className="text-sm font-medium text-gray-900">
+//                         {change.subject_name || 'System Update'}
+//                       </p>
+//                       <p className="text-xs text-gray-500">
+//                         {change.change_type} - {change.day_of_week} {change.time_slot}
+//                       </p>
+//                       <p className="text-xs text-gray-400">
+//                         {new Date(change.created_at).toLocaleString()}
+//                       </p>
+//                     </div>
+//                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${change.change_type === 'rescheduled' ? 'bg-orange-100 text-orange-800' :
+//                         change.change_type === 'modified' ? 'bg-blue-100 text-blue-800' :
+//                           change.change_type === 'cancelled' ? 'bg-red-100 text-red-800' :
+//                             'bg-green-100 text-green-800'
+//                       }`}>
+//                       {change.change_type}
+//                     </span>
+//                   </div>
+//                 ))
+//               ) : (
+//                 <div className="text-center py-8 text-gray-500">
+//                   <Clock className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+//                   <p className="text-sm">No recent changes</p>
+//                 </div>
+//               )}
+//             </div>
+//           </Card>
+//         </div>
+//       )}
 
-      {/* Conflicts Alert */}
-      {realTimeData?.conflicts && realTimeData.conflicts.length > 0 && (
-        <Card className="p-6 border-l-4 border-red-500">
-          <div className="flex items-center space-x-3 mb-4">
-            <AlertCircle className="w-6 h-6 text-red-600" />
-            <h2 className="text-lg font-semibold text-red-900">Active Conflicts</h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {realTimeData.conflicts.map((conflict, index) => (
-              <div key={index} className="bg-red-50 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-red-900 capitalize">
-                    {conflict.conflict_type.replace(/_/g, ' ')}
-                  </span>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                    {conflict.count}
-                  </span>
-                </div>
-                <p className="text-sm text-red-700 mt-1">
-                  Severity: {conflict.severity}
-                </p>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
+//       {/* Conflicts Alert */}
+//       {realTimeData?.conflicts && realTimeData.conflicts.length > 0 && (
+//         <Card className="p-6 border-l-4 border-red-500">
+//           <div className="flex items-center space-x-3 mb-4">
+//             <AlertCircle className="w-6 h-6 text-red-600" />
+//             <h2 className="text-lg font-semibold text-red-900">Active Conflicts</h2>
+//           </div>
+//           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+//             {realTimeData.conflicts.map((conflict, index) => (
+//               <div key={index} className="bg-red-50 rounded-lg p-4">
+//                 <div className="flex items-center justify-between">
+//                   <span className="font-medium text-red-900 capitalize">
+//                     {conflict.conflict_type.replace(/_/g, ' ')}
+//                   </span>
+//                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+//                     {conflict.count}
+//                   </span>
+//                 </div>
+//                 <p className="text-sm text-red-700 mt-1">
+//                   Severity: {conflict.severity}
+//                 </p>
+//               </div>
+//             ))}
+//           </div>
+//         </Card>
+//       )}
 
-      {/* Optimization Modal */}
-      {showOptimizationModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <div
-              className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75"
-              onClick={() => setShowOptimizationModal(false)}
-            ></div>
+//       {/* Optimization Modal */}
+//       {showOptimizationModal && (
+//         <div className="fixed inset-0 z-50 overflow-y-auto">
+//           <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+//             <div
+//               className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75"
+//               onClick={() => setShowOptimizationModal(false)}
+//             ></div>
 
-            <div className="inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-gray-900">Choose Optimization Type</h3>
-                <button
-                  onClick={() => setShowOptimizationModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
+//             <div className="inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
+//               <div className="flex items-center justify-between mb-4">
+//                 <h3 className="text-lg font-medium text-gray-900">Choose Optimization Type</h3>
+//                 <button
+//                   onClick={() => setShowOptimizationModal(false)}
+//                   className="text-gray-400 hover:text-gray-600"
+//                 >
+//                   <X className="w-6 h-6" />
+//                 </button>
+//               </div>
 
-              <div className="space-y-4">
-                <button
-                  onClick={() => handleOptimization('minimize_gaps')}
-                  disabled={activeOptimization}
-                  className="w-full p-4 text-left border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <div className="flex items-center space-x-3">
-                    <Clock className="w-6 h-6 text-blue-600" />
-                    <div>
-                      <h4 className="font-medium text-gray-900">Minimize Gaps</h4>
-                      <p className="text-sm text-gray-600">Reduce empty periods between classes</p>
-                    </div>
-                  </div>
-                </button>
+//               <div className="space-y-4">
+//                 <button
+//                   onClick={() => handleOptimization('minimize_gaps')}
+//                   disabled={activeOptimization}
+//                   className="w-full p-4 text-left border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+//                 >
+//                   <div className="flex items-center space-x-3">
+//                     <Clock className="w-6 h-6 text-blue-600" />
+//                     <div>
+//                       <h4 className="font-medium text-gray-900">Minimize Gaps</h4>
+//                       <p className="text-sm text-gray-600">Reduce empty periods between classes</p>
+//                     </div>
+//                   </div>
+//                 </button>
 
-                <button
-                  onClick={() => handleOptimization('maximize_utilization')}
-                  disabled={activeOptimization}
-                  className="w-full p-4 text-left border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <div className="flex items-center space-x-3">
-                    <TrendingUp className="w-6 h-6 text-green-600" />
-                    <div>
-                      <h4 className="font-medium text-gray-900">Maximize Utilization</h4>
-                      <p className="text-sm text-gray-600">Optimize room and faculty usage</p>
-                    </div>
-                  </div>
-                </button>
+//                 <button
+//                   onClick={() => handleOptimization('maximize_utilization')}
+//                   disabled={activeOptimization}
+//                   className="w-full p-4 text-left border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+//                 >
+//                   <div className="flex items-center space-x-3">
+//                     <TrendingUp className="w-6 h-6 text-green-600" />
+//                     <div>
+//                       <h4 className="font-medium text-gray-900">Maximize Utilization</h4>
+//                       <p className="text-sm text-gray-600">Optimize room and faculty usage</p>
+//                     </div>
+//                   </div>
+//                 </button>
 
-                <button
-                  onClick={() => handleOptimization('balanced')}
-                  disabled={activeOptimization}
-                  className="w-full p-4 text-left border border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <div className="flex items-center space-x-3">
-                    <BarChart3 className="w-6 h-6 text-purple-600" />
-                    <div>
-                      <h4 className="font-medium text-gray-900">Balanced Optimization</h4>
-                      <p className="text-sm text-gray-600">Balance all factors for optimal schedule</p>
-                    </div>
-                  </div>
-                </button>
-              </div>
+//                 <button
+//                   onClick={() => handleOptimization('balanced')}
+//                   disabled={activeOptimization}
+//                   className="w-full p-4 text-left border border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+//                 >
+//                   <div className="flex items-center space-x-3">
+//                     <BarChart3 className="w-6 h-6 text-purple-600" />
+//                     <div>
+//                       <h4 className="font-medium text-gray-900">Balanced Optimization</h4>
+//                       <p className="text-sm text-gray-600">Balance all factors for optimal schedule</p>
+//                     </div>
+//                   </div>
+//                 </button>
+//               </div>
 
-              <div className="flex justify-end space-x-3 mt-6">
-                <button
-                  onClick={() => setShowOptimizationModal(false)}
-                  className="px-4 py-2 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
+//               <div className="flex justify-end space-x-3 mt-6">
+//                 <button
+//                   onClick={() => setShowOptimizationModal(false)}
+//                   className="px-4 py-2 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 transition-colors"
+//                 >
+//                   Cancel
+//                 </button>
+//               </div>
+//             </div>
+//           </div>
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
 
 // ==================== UI COMPONENTS (Moved to components/common) ====================
 
@@ -443,6 +441,7 @@ const EnhancedDashboard = () => {
 // Login Component
 const LoginForm = () => {
   const { login } = useAuth();
+  const api = useMemo(() => new APIService(), []);
 
   const [formData, setFormData] = useState({ username: '', password: '', role: 'student' });
   const [loading, setLoading] = useState(false);
@@ -454,7 +453,6 @@ const LoginForm = () => {
     setError('');
 
     try {
-      const api = new APIService();
       const response = await api.login(formData);
       login(response.user, response.token);
     } catch (err) {
@@ -522,7 +520,7 @@ const LoginForm = () => {
   );
 };
 
-
+// eslint-disable-next-line no-unused-vars
 const FacultyLogin = ({ onLoginSuccess }) => {
   const [formData, setFormData] = useState({
     email: '',
@@ -665,13 +663,9 @@ const FacultyProfile = () => {
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState(false);
 
-  const api = new APIService();
+  const api = useMemo(() => new APIService(), []);
 
-  useEffect(() => {
-    loadProfile();
-  }, []);
-
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     try {
       const data = await api.request('/faculty/profile');
       setProfile(data);
@@ -680,7 +674,11 @@ const FacultyProfile = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [api]);
+
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
@@ -879,13 +877,9 @@ const FacultyLoginManagement = () => {
   const [bulkResults, setBulkResults] = useState(null);
   const [resettingPassword, setResettingPassword] = useState(null);
 
-  const api = new APIService();
+  const api = useMemo(() => new APIService(), []);
 
-  useEffect(() => {
-    loadLoginStatus();
-  }, []);
-
-  const loadLoginStatus = async () => {
+  const loadLoginStatus = useCallback(async () => {
     try {
       const data = await api.request('/faculty/login-status');
       setLoginStatus(data);
@@ -894,7 +888,11 @@ const FacultyLoginManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [api]);
+
+  useEffect(() => {
+    loadLoginStatus();
+  }, [loadLoginStatus]);
 
   const handleBulkRegister = async () => {
     setBulkRegistering(true);
@@ -1168,20 +1166,20 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
   const [isExpanded, setIsExpanded] = useState(true);
 
   const menuItems = [
-    { id: 'dashboard', label: 'Smart Dashboard', icon: Home },
+    // { id: 'dashboard', label: 'Smart Dashboard', icon: Home },
     { id: 'leave', label: 'Leave Management', icon: Calendar }, // New
     { id: 'multi-section', label: 'Multi-Section', icon: Users }, // NEW
     { id: 'multi-section-import', label: 'Import Data', icon: Upload },
-    { id: 'timetable', label: 'Timetable', icon: Calendar },
+    // { id: 'timetable', label: 'Timetable', icon: Calendar },
     { id: 'faculty-management', label: 'Faculty Accounts', icon: Users },
-    { id: 'optimization', label: 'Optimization', icon: TrendingUp }, // New
+    // { id: 'optimization', label: 'Optimization', icon: TrendingUp }, // New
     { id: 'faculty-subjects', label: 'Faculty Subjects', icon: BookOpen }, // NEW
     { id: 'swap-request', label: 'Swap Request', icon: Calendar }, // NEW
     { id: 'faculty', label: 'Faculty', icon: Users },
     { id: 'students', label: 'Students', icon: GraduationCap },
     { id: 'rooms', label: 'Rooms', icon: Building },
     { id: 'subjects', label: 'Subjects', icon: BookOpen },
-    { id: 'requests', label: 'Requests', icon: Bell },
+    // { id: 'requests', label: 'Requests', icon: Bell },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'settings', label: 'Settings', icon: Settings },
     { id: 'faculty-profile', label: 'My Profile', icon: User },
@@ -1198,11 +1196,11 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
   const getVisibleItems = () => {
     switch (user?.role) {
       case 'student':
-        return menuItems.filter(item => ['dashboard', 'timetable'].includes(item.id));
+        return menuItems.filter(item => [ 'multi-section'].includes(item.id));
       case 'faculty':
-        return menuItems.filter(item => ['dashboard', 'timetable', 'multi-section', 'requests', 'settings','faculty-profile','my-timetable','swap-request','leave'].includes(item.id));
+        return menuItems.filter(item => [ 'timetable', 'multi-section', 'requests', 'settings','faculty-profile','my-timetable','swap-request','leave'].includes(item.id));
       case 'admin':
-        const updated_menu =  menuItems.slice(0,16);
+        const updated_menu =  menuItems.slice(0,12);
         return updated_menu; // CHANGED from menuItems to menuItemsWithMulti
       default:
         return [];
@@ -1303,16 +1301,13 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
-  const [generateLoading, setGenerateLoading] = useState(false);
   const [selectedBatch, setSelectedBatch] = useState('CS2023');
+  // eslint-disable-next-line no-unused-vars
+  const [generateLoading, setGenerateLoading] = useState(false);
 
-  const api = new APIService();
+  const api = useMemo(() => new APIService(), []);
 
-  useEffect(() => {
-    loadDashboardData();
-  }, []);
-
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     try {
       // In a real app, you'd have a dashboard analytics endpoint
       setStats({
@@ -1330,7 +1325,11 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
 
   const handleGenerateTimetable = async (algorithm = 'balanced') => {
     setGenerateLoading(true);
@@ -1339,7 +1338,7 @@ const Dashboard = () => {
         department: 'Computer Science',
         semester: 3,
         batch: selectedBatch,
-        algorithm: algorithm // Add algorithm selection
+        algorithm: algorithm
       };
 
       const response = await api.generateTimetable(generateData);
@@ -1651,13 +1650,9 @@ const FacultyManagement = () => {
     name: '', email: '', department: '', subjects: []
   });
 
-  const api = new APIService();
+  const api = useMemo(() => new APIService(), []);
 
-  useEffect(() => {
-    loadFaculty();
-  }, []);
-
-  const loadFaculty = async () => {
+  const loadFaculty = useCallback(async () => {
     try {
       const data = await api.getFaculty();
       setFaculty(data);
@@ -1666,7 +1661,11 @@ const FacultyManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [api]);
+
+  useEffect(() => {
+    loadFaculty();
+  }, [loadFaculty]);
 
   const handleSubmit = async () => {
     try {
@@ -1848,13 +1847,9 @@ const StudentsManagement = () => {
     name: '', email: '', batch: '', semester: 1, department: ''
   });
 
-  const api = new APIService();
+  const api = useMemo(() => new APIService(), []);
 
-  useEffect(() => {
-    loadStudents();
-  }, []);
-
-  const loadStudents = async () => {
+  const loadStudents = useCallback(async () => {
     try {
       const data = await api.getStudents();
       setStudents(data);
@@ -1863,7 +1858,11 @@ const StudentsManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [api]);
+
+  useEffect(() => {
+    loadStudents();
+  }, [loadStudents]);
 
   const handleSubmit = async () => {
     try {
@@ -2040,13 +2039,9 @@ const RoomsManagement = () => {
     name: '', type: 'Classroom', capacity: '', department: '', location: ''
   });
 
-  const api = new APIService();
+  const api = useMemo(() => new APIService(), []);
 
-  useEffect(() => {
-    loadRooms();
-  }, []);
-
-  const loadRooms = async () => {
+  const loadRooms = useCallback(async () => {
     try {
       const data = await api.getRooms();
       setRooms(data);
@@ -2055,7 +2050,11 @@ const RoomsManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [api]);
+
+  useEffect(() => {
+    loadRooms();
+  }, [loadRooms]);
 
   const handleSubmit = async () => {
     try {
@@ -2240,13 +2239,9 @@ const SubjectsManagement = () => {
     name: '', code: '', department: '', credits: 1, type: 'Theory'
   });
 
-  const api = new APIService();
+  const api = useMemo(() => new APIService(), []);
 
-  useEffect(() => {
-    loadSubjects();
-  }, []);
-
-  const loadSubjects = async () => {
+  const loadSubjects = useCallback(async () => {
     try {
       const data = await api.getSubjects();
       setSubjects(data);
@@ -2255,7 +2250,11 @@ const SubjectsManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [api]);
+
+  useEffect(() => {
+    loadSubjects();
+  }, [loadSubjects]);
 
   const handleSubmit = async () => {
     try {
@@ -2431,212 +2430,215 @@ const SubjectsManagement = () => {
 };
 
 // Enhanced Timetable Component
-const Timetable = () => {
-  const { user } = useAuth();
-  const api = new APIService();
-  const [timetable, setTimetable] = useState([]);
-  const [selectedBatch, setSelectedBatch] = useState('CS2023');
-  const [loading, setLoading] = useState(false);
-  const [showGenerateModal, setShowGenerateModal] = useState(false);
-  const [generateLoading, setGenerateLoading] = useState(false);
+// const Timetable = () => {
+//   const { user } = useAuth();
+//   const api = useMemo(() => new APIService(), []);
+//   const [timetable, setTimetable] = useState([]);
+//   const [selectedBatch, setSelectedBatch] = useState('CS2023');
+//   const [loading, setLoading] = useState(false);
+//   const [showGenerateModal, setShowGenerateModal] = useState(false);
+//   const [generateLoading, setGenerateLoading] = useState(false);
 
-  const timeSlots = [
-    '09:00-10:00', '10:00-11:00', '11:00-12:00', '12:00-13:00',
-    '14:00-15:00', '15:00-16:00', '16:00-17:00'
-  ];
-  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+//   const timeSlots = [
+//     '09:00-10:00', '10:00-11:00', '11:00-12:00', '12:00-13:00',
+//     '14:00-15:00', '15:00-16:00', '16:00-17:00'
+//   ];
+//   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
-  useEffect(() => {
-    if (user?.role === 'faculty') {
-      loadFacultyTimetable();
-    } else {
-      loadTimetable(selectedBatch);
-    }
-  }, [selectedBatch, user]);
+//   const loadTimetable = useCallback(async (batch) => {
+//     setLoading(true);
+//     try {
+//       const data = await api.getTimetable(batch);
+//       setTimetable(data);
+//     } catch (error) {
+//       console.error('Failed to load timetable:', error);
+//     } finally {
+//       setLoading(false);
+//     }
+//   }, [api]);
 
-  const loadTimetable = async (batch) => {
-    setLoading(true);
-    try {
-      const data = await api.getTimetable(batch);
-      setTimetable(data);
-    } catch (error) {
-      console.error('Failed to load timetable:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+//   const loadFacultyTimetable = useCallback(async () => {
+//     setLoading(true);
+//     try {
+//       const data = await api.getFacultyTimetable(user.id);
+//       setTimetable(data);
+//     } catch (error) {
+//       console.error('Failed to load faculty timetable:', error);
+//     } finally {
+//       setLoading(false);
+//     }
+//   }, [api, user]);
 
-  const loadFacultyTimetable = async () => {
-    setLoading(true);
-    try {
-      const data = await api.getFacultyTimetable(user.id);
-      setTimetable(data);
-    } catch (error) {
-      console.error('Failed to load faculty timetable:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+//   useEffect(() => {
+//     if (user?.role === 'faculty') {
+//       loadFacultyTimetable();
+//     } else {
+//       loadTimetable(selectedBatch);
+//     }
+//   }, [selectedBatch, user, loadTimetable, loadFacultyTimetable]);
 
-  const handleGenerateTimetable = async () => {
-    setGenerateLoading(true);
-    try {
-      const generateData = {
-        department: 'Computer Science',
-        semester: 3,  // Make sure semester is included
-        batch: selectedBatch
-      };
+//   const handleGenerateTimetable = async () => {
+//     setGenerateLoading(true);
+//     try {
+//       const generateData = {
+//         department: 'Computer Science',
+//         semester: 3,  // Make sure semester is included
+//         batch: selectedBatch
+//       };
 
-      console.log('Generating timetable with data:', generateData);
+//       console.log('Generating timetable with data:', generateData);
 
-      // Call the generate API
-      const response = await api.generateTimetable(generateData);
-      console.log('Generate response:', response);
+//       // Call the generate API
+//       const response = await api.generateTimetable(generateData);
+//       console.log('Generate response:', response);
 
-      // Show success message
-      alert(`Timetable generated successfully! ${response.classesGenerated || 0} classes created.`);
+//       // Show success message
+//       alert(`Timetable generated successfully! ${response.classesGenerated || 0} classes created.`);
 
-      // Reload the timetable
-      await loadTimetable(selectedBatch);
-      setShowGenerateModal(false);
-    } catch (error) {
-      console.error('Failed to generate timetable:', error);
-      alert('Failed to generate timetable. Error: ' + (error.message || 'Please check your backend server and database connection.'));
-    } finally {
-      setGenerateLoading(false);
-    }
-  };
+//       // Reload the timetable
+//       await loadTimetable(selectedBatch);
+//       setShowGenerateModal(false);
+//     } catch (error) {
+//       console.error('Failed to generate timetable:', error);
+//       alert('Failed to generate timetable. Error: ' + (error.message || 'Please check your backend server and database connection.'));
+//     } finally {
+//       setGenerateLoading(false);
+//     }
+//   };
 
-  const getClassForSlot = (day, timeSlot) => {
-    return timetable.find(
-      (item) => item.day_of_week === day && item.time_slot === timeSlot
-    );
-  };
-  //  ot = (day, timeSlot) => {
-  //   return timetable.find(
-  //     (item) => item.day_of_week === day && item.time_slot === timeSlot
-  //   );
-  // };
+//   const getClassForSlot = (day, timeSlot) => {
+//     return timetable.find(
+//       (item) => item.day_of_week === day && item.time_slot === timeSlot
+//     );
+//   };
+//   //  ot = (day, timeSlot) => {
+//   //   return timetable.find(
+//   //     (item) => item.day_of_week === day && item.time_slot === timeSlot
+//   //   );
+//   // };
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">
-          {user?.role === 'faculty' ? 'My Timetable' : 'Timetable'}
-        </h1>
-        <div className="flex items-center space-x-4">
-          {user?.role !== 'faculty' && (
-            <select
-              value={selectedBatch}
-              onChange={(e) => setSelectedBatch(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="CS2023">CS 2023</option>
-              <option value="MATH2023">Math 2023</option>
-              <option value="PHY2023">Physics 2023</option>
-            </select>
-          )}
-          {user?.role === 'admin' && (
-            <Button onClick={() => setShowGenerateModal(true)}>
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Generate Timetable
-            </Button>
-          )}
-        </div>
-      </div>
+//   return (
+//     <div className="space-y-6">
+//       <div className="flex items-center justify-between">
+//         <h1 className="text-3xl font-bold text-gray-900">
+//           {user?.role === 'faculty' ? 'My Timetable' : 'Timetable'}
+//         </h1>
+//         <div className="flex items-center space-x-4">
+//           {user?.role !== 'faculty' && (
+//             <select
+//               value={selectedBatch}
+//               onChange={(e) => setSelectedBatch(e.target.value)}
+//               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+//             >
+//               <option value="CS2023">CS 2023</option>
+//               <option value="MATH2023">Math 2023</option>
+//               <option value="PHY2023">Physics 2023</option>
+//             </select>
+//           )}
+//           {user?.role === 'admin' && (
+//             <Button onClick={() => setShowGenerateModal(true)}>
+//               <RefreshCw className="w-4 h-4 mr-2" />
+//               Generate Timetable
+//             </Button>
+//           )}
+//         </div>
+//       </div>
 
-      <Card>
-        {loading ? (
-          <div className="p-8">
-            <LoadingSpinner size="lg" />
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase w-32">Time</th>
-                  {days.map((day) => (
-                    <th key={day} className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase">{day}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {timeSlots.map((timeSlot) => (
-                  <tr key={timeSlot} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{timeSlot}</td>
-                    {days.map((day) => {
-                      const classData = getClassForSlot(day, timeSlot);
-                      return (
-                        <td key={`${day}-${timeSlot}`} className="px-6 py-4">
-                          {classData ? (
-                            <div className="bg-indigo-100 p-3 rounded-lg border-l-4 border-indigo-600">
-                              <p className="text-sm font-medium text-indigo-900">{classData.subject_name}</p>
-                              <p className="text-xs text-indigo-700">{classData.subject_code}</p>
-                              <p className="text-xs text-indigo-600 mt-1">{classData.faculty_name}</p>
-                              <p className="text-xs text-indigo-600">{classData.room_name}</p>
-                            </div>
-                          ) : (
-                            <div className="text-gray-400 text-sm text-center py-3">Free</div>
-                          )}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Card>
+//       <Card>
+//         {loading ? (
+//           <div className="p-8">
+//             <LoadingSpinner size="lg" />
+//           </div>
+//         ) : (
+//           <div className="overflow-x-auto">
+//             <table className="w-full">
+//               <thead className="bg-gray-50">
+//                 <tr>
+//                   <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase w-32">Time</th>
+//                   {days.map((day) => (
+//                     <th key={day} className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase">{day}</th>
+//                   ))}
+//                 </tr>
+//               </thead>
+//               <tbody className="bg-white divide-y divide-gray-200">
+//                 {timeSlots.map((timeSlot) => (
+//                   <tr key={timeSlot} className="hover:bg-gray-50">
+//                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{timeSlot}</td>
+//                     {days.map((day) => {
+//                       const classData = getClassForSlot(day, timeSlot);
+//                       return (
+//                         <td key={`${day}-${timeSlot}`} className="px-6 py-4">
+//                           {classData ? (
+//                             <div className="bg-indigo-100 p-3 rounded-lg border-l-4 border-indigo-600">
+//                               <p className="text-sm font-medium text-indigo-900">{classData.subject_name}</p>
+//                               <p className="text-xs text-indigo-700">{classData.subject_code}</p>
+//                               <p className="text-xs text-indigo-600 mt-1">{classData.faculty_name}</p>
+//                               <p className="text-xs text-indigo-600">{classData.room_name}</p>
+//                             </div>
+//                           ) : (
+//                             <div className="text-gray-400 text-sm text-center py-3">Free</div>
+//                           )}
+//                         </td>
+//                       );
+//                     })}
+//                   </tr>
+//                 ))}
+//               </tbody>
+//             </table>
+//           </div>
+//         )}
+//       </Card>
 
-      <Modal
-        isOpen={showGenerateModal}
-        onClose={() => setShowGenerateModal(false)}
-        title="Generate Timetable"
-      >
-        <div className="space-y-4">
-          <p className="text-sm text-gray-600">
-            This will generate a new timetable for {selectedBatch}. All existing schedules will be replaced.
-          </p>
-          <div className="flex space-x-3 mt-6">
-            <Button onClick={handleGenerateTimetable} disabled={generateLoading}>
-              {generateLoading ? 'Generating...' : 'Generate'}
-            </Button>
-            <Button variant="secondary" onClick={() => setShowGenerateModal(false)}>
-              Cancel
-            </Button>
-          </div>
-        </div>
-      </Modal>
-    </div>
-  );
-};
+//       <Modal
+//         isOpen={showGenerateModal}
+//         onClose={() => setShowGenerateModal(false)}
+//         title="Generate Timetable"
+//       >
+//         <div className="space-y-4">
+//           <p className="text-sm text-gray-600">
+//             This will generate a new timetable for {selectedBatch}. All existing schedules will be replaced.
+//           </p>
+//           <div className="flex space-x-3 mt-6">
+//             <Button onClick={handleGenerateTimetable} disabled={generateLoading}>
+//               {generateLoading ? 'Generating...' : 'Generate'}
+//             </Button>
+//             <Button variant="secondary" onClick={() => setShowGenerateModal(false)}>
+//               Cancel
+//             </Button>
+//           </div>
+//         </div>
+//       </Modal>
+//     </div>
+//   );
+// };
 
 
 
 const MultiSectionTimetable = () => {
-  const api = new APIService();
+  const api = useMemo(() => new APIService(), []);
   const { user } = useAuth();
 
   
   const [selectedBatch, setSelectedBatch] = useState('CS2023');
   const [selectedSection, setSelectedSection] = useState('A');
   const [sections, setSections] = useState(['A', 'B', 'C']);
+  // eslint-disable-next-line no-unused-vars
   const [availableSections, setAvailableSections] = useState(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S']);
   const [timetable, setTimetable] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [showValidationModal, setShowValidationModal] = useState(false);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false); // NEW
-  const [deleteTarget, setDeleteTarget] = useState({ all: false, sections: [] }); // NEW
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState({ all: false, sections: [] });
   const [generateLoading, setGenerateLoading] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [validationReport, setValidationReport] = useState(null);
   const [summaryData, setSummaryData] = useState(null);
   const [viewMode, setViewMode] = useState('grid');
-  const [sectionsConfig, setSectionsConfig] = useState([]); // NEW
-  const [showDayOffModal, setShowDayOffModal] = useState(false); // NEW
+  const [sectionsConfig, setSectionsConfig] = useState([]);
+  const [showDayOffModal, setShowDayOffModal] = useState(false);
 
   const timeSlots = [
     '09:00-10:00', '10:00-11:00', '11:00-12:00',
@@ -2644,11 +2646,9 @@ const MultiSectionTimetable = () => {
   ];
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-  useEffect(() => {
-    loadSectionTimetable();
-  }, [selectedBatch, selectedSection]);
-
-  const loadSectionTimetable = async () => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  
+  const loadSectionTimetable = useCallback(async () => {
     setLoading(true);
     try {
       const data = await api.getSectionTimetable(selectedBatch, selectedSection);
@@ -2658,8 +2658,11 @@ const MultiSectionTimetable = () => {
     } finally {
       setLoading(false);
     }
-  };
-
+  }, [api, selectedBatch, selectedSection]);
+  
+  useEffect(() => {
+    loadSectionTimetable();
+  }, [ loadSectionTimetable]);
 
   const handleGenerateMultiSection = async () => {
     setGenerateLoading(true);
@@ -3365,14 +3368,13 @@ const MultiSectionTimetable = () => {
 };
 
 const FacultyMyTimetable = () => {
-  const api = new APIService();
+  const api = useMemo(() => new APIService(), []);
+  // eslint-disable-next-line no-unused-vars
   const { user } = useAuth();
   
   const [timetable, setTimetable] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState('week'); // week, day, list
-  const [selectedDay, setSelectedDay] = useState('Monday');
-  const [selectedWeek, setSelectedWeek] = useState('current');
+  const [viewMode, setViewMode] = useState('week');
   const [filters, setFilters] = useState({
     batch: 'all',
     section: 'all',
@@ -3386,58 +3388,46 @@ const FacultyMyTimetable = () => {
     '14:00-15:00', '15:00-16:00', '16:00-17:00'
   ];
 
-  useEffect(() => {
-    loadFacultyTimetable();
-  }, [filters]);
-
-  const loadFacultyTimetable = async () => {
-    setLoading(true);
-    try {
-      // Get faculty profile to get faculty ID
-      const profile = await api.getFacultyProfile();
-      
-      // Get timetable for this faculty
-      const data = await api.getFacultyTimetable(profile.id);
-      setTimetable(data);
-      
-      // Calculate statistics
-      calculateStats(data);
-    } catch (error) {
-      console.error('Failed to load faculty timetable:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const calculateStats = (data) => {
-    const filteredData = applyFilters(data);
-    
-    const uniqueBatches = [...new Set(filteredData.map(c => c.batch))];
-    const uniqueSections = [...new Set(filteredData.map(c => `${c.batch}-${c.section || 'A'}`))];
-    const uniqueSubjects = [...new Set(filteredData.map(c => c.subject_name))];
-    const totalClasses = filteredData.length;
-    const totalHours = filteredData.reduce((sum, c) => sum + (c.duration_minutes / 60), 0);
-    
-    setStats({
-      totalClasses,
-      totalHours: totalHours,
-      uniqueBatches: uniqueBatches.length,
-      uniqueSections: uniqueSections.length,
-      uniqueSubjects: uniqueSubjects.length,
-      batches: uniqueBatches,
-      sections: uniqueSections,
-      subjects: uniqueSubjects
-    });
-  };
-
-  const applyFilters = (data) => {
+  const applyFilters = useCallback((data) => {
     return data.filter(item => {
       if (filters.batch !== 'all' && item.batch !== filters.batch) return false;
       if (filters.section !== 'all' && item.section !== filters.section) return false;
       if (filters.subject !== 'all' && item.subject_name !== filters.subject) return false;
       return true;
     });
-  };
+  }, [filters]);
+
+  const calculateStats = useCallback((data) => {
+    const filteredData = applyFilters(data);
+    const uniqueBatches = [...new Set(filteredData.map(c => c.batch))];
+    const uniqueSections = [...new Set(filteredData.map(c => `${c.batch}-${c.section || 'A'}`))];
+    const uniqueSubjects = [...new Set(filteredData.map(c => c.subject_name))];
+    const hours = filteredData.length * 1;
+    setStats({
+      batches: uniqueBatches.length,
+      sections: uniqueSections.length,
+      subjects: uniqueSubjects.length,
+      hours: hours
+    });
+  }, [applyFilters]);
+
+  const loadFacultyTimetable = useCallback(async () => {
+    setLoading(true);
+    try {
+      const profile = await api.getFacultyProfile();
+      const data = await api.getFacultyTimetable(profile.id);
+      setTimetable(data);
+      calculateStats(data);
+    } catch (error) {
+      console.error('Failed to load faculty timetable:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [api, calculateStats]);
+
+  useEffect(() => {
+    loadFacultyTimetable();
+  }, [loadFacultyTimetable]);
 
   const getClassForSlot = (day, timeSlot) => {
     const filteredData = applyFilters(timetable);
@@ -3824,6 +3814,7 @@ const FacultyMyTimetable = () => {
 // Add to your React file after the existing imports
 
 const MultiSectionDataImport = () => {
+  // eslint-disable-next-line no-unused-vars
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({});
@@ -4123,7 +4114,7 @@ const AdvancedSwapRequestManagement = () => {
 
   // Get token from localStorage
   const token = localStorage.getItem('token');
-  const api = new APIService(token);
+  const api = useMemo(() => new APIService(token), [token]);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -4140,15 +4131,7 @@ const AdvancedSwapRequestManagement = () => {
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const timeSlots = ['09:00-10:00', '10:00-11:00', '11:00-12:00', '14:00-15:00', '15:00-16:00', '16:00-17:00'];
 
-  useEffect(() => {
-    loadInitialData();
-  }, []);
-
-  useEffect(() => {
-    loadSwapRequests();
-  }, [filterStatus]);
-
-  const loadInitialData = async () => {
+  const loadInitialData = useCallback(async () => {
     setLoading(true);
     try {
       const userData = JSON.parse(localStorage.getItem('user') || '{}');
@@ -4165,9 +4148,10 @@ const AdvancedSwapRequestManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [api]);
 
-  const loadSwapRequests = async () => {
+  const loadSwapRequests = useCallback(async () => {
     try {
       const statusFilter = filterStatus === 'all' ? null : filterStatus;
       const facultyId = user?.role === 'faculty' ? user.id : null;
@@ -4176,18 +4160,18 @@ const AdvancedSwapRequestManagement = () => {
     } catch (error) {
       console.error('Failed to load swap requests:', error);
     }
-  };
+  }, [api, filterStatus, user]);
 
-  const loadFaculty = async () => {
+  const loadFaculty = useCallback(async () => {
     try {
       const data = await api.getFaculty();
       setFaculty(data || []);
     } catch (error) {
       console.error('Failed to load faculty:', error);
     }
-  };
+  }, [api]);
 
-  const loadMyClasses = async (userId) => {
+  const loadMyClasses = useCallback(async (userId) => {
     try {
       const profile = await api.getFacultyProfile();
       const classes = await api.getFacultyTimetable(profile.id);
@@ -4196,7 +4180,15 @@ const AdvancedSwapRequestManagement = () => {
     } catch (error) {
       console.error('Failed to load my classes:', error);
     }
-  };
+  }, [api]);
+
+  useEffect(() => {
+    loadInitialData();
+  }, [loadInitialData]);
+
+  useEffect(() => {
+    loadSwapRequests();
+  }, [loadSwapRequests]);
 
   const handleValidateRequest = async () => {
     if (!selectedClass || !formData.target_faculty_id || !formData.requested_day || !formData.requested_time_slot) {
@@ -4814,10 +4806,11 @@ const LeaveManagement = () =>  {
     reason: ''
   });
 
+  // eslint-disable-next-line no-unused-vars
   const [impactAnalysis, setImpactAnalysis] = useState(null);
 
   const token = localStorage.getItem('token');
-  const api = new APIService(token);
+  const api = useMemo(() => new APIService(token), [token]);
 
   const leaveTypes = [
     { value: 'Casual', label: '🗓️ Casual Leave', color: 'blue' },
@@ -4828,15 +4821,7 @@ const LeaveManagement = () =>  {
     { value: 'Sabbatical', label: '📖 Sabbatical', color: 'indigo' }
   ];
 
-  useEffect(() => {
-    loadInitialData();
-  }, []);
-
-  useEffect(() => {
-    loadLeaveRequests();
-  }, [filterStatus]);
-
-  const loadInitialData = async () => {
+  const loadInitialData = useCallback(async () => {
     setLoading(true);
     try {
       const userData = JSON.parse(localStorage.getItem('user') || '{}');
@@ -4847,9 +4832,10 @@ const LeaveManagement = () =>  {
     } finally {
       setLoading(false);
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const loadLeaveRequests = async () => {
+  const loadLeaveRequests = useCallback(async () => {
     try {
       const data = await api.getLeaveRequests();
       setLeaveRequests(data || []);
@@ -4857,7 +4843,15 @@ const LeaveManagement = () =>  {
       console.error('Failed to load leave requests:', error);
       alert('Failed to load leave requests: ' + error.message);
     }
-  };
+  }, [api]);
+
+  useEffect(() => {
+    loadInitialData();
+  }, [loadInitialData]);
+
+  useEffect(() => {
+    loadLeaveRequests();
+  }, [loadLeaveRequests]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -5411,298 +5405,298 @@ const LeaveManagement = () =>  {
 
 // Requests Management Component
 // Requests Management Component
-const RequestsManagement = () => {
-  const { user } = useAuth();
-  const [swapRequests, setSwapRequests] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('swap');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [faculty, setFaculty] = useState([]);
-  const [formData, setFormData] = useState({
-    target_faculty_id: '',
-    original_time_slot: '',
-    requested_time_slot: '',
-    requested_day: 'Monday',
-    reason: ''
-  });
+// const RequestsManagement = () => {
+//   const { user } = useAuth();
+//   const [swapRequests, setSwapRequests] = useState([]);
+//   const [loading, setLoading] = useState(true);
+//   const [activeTab, setActiveTab] = useState('swap');
+//   const [showCreateModal, setShowCreateModal] = useState(false);
+//   const [faculty, setFaculty] = useState([]);
+//   const [formData, setFormData] = useState({
+//     target_faculty_id: '',
+//     original_time_slot: '',
+//     requested_time_slot: '',
+//     requested_day: 'Monday',
+//     reason: ''
+//   });
 
-  const api = new APIService();
+//   const api = useMemo(() => new APIService(), []);
 
-  useEffect(() => {
-    loadSwapRequests();
-    loadFaculty();
-  }, []);
+//   const loadFaculty = useCallback(async () => {
+//     try {
+//       const data = await api.getFaculty();
+//       setFaculty(data);
+//     } catch (error) {
+//       console.error('Failed to load faculty:', error);
+//     }
+//   }, [api]);
 
-  const loadFaculty = async () => {
-    try {
-      const data = await api.getFaculty();
-      setFaculty(data);
-    } catch (error) {
-      console.error('Failed to load faculty:', error);
-    }
-  };
+//   const loadSwapRequests = useCallback(async () => {
+//     try {
+//       const data = await api.getSwapRequests();
+//       setSwapRequests(data);
+//     } catch (error) {
+//       console.error('Failed to load swap requests:', error);
+//     } finally {
+//       setLoading(false);
+//     }
+//   }, [api]);
 
-  const loadSwapRequests = async () => {
-    try {
-      const data = await api.getSwapRequests();
-      setSwapRequests(data);
-    } catch (error) {
-      console.error('Failed to load swap requests:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+//   useEffect(() => {
+//     loadSwapRequests();
+//     loadFaculty();
+//   }, [loadSwapRequests, loadFaculty]);
 
-  const handleCreateRequest = async () => {
-    try {
-      // Validate all fields are filled
-      if (!formData.target_faculty_id || !formData.original_time_slot || !formData.requested_time_slot || !formData.requested_day || !formData.reason.trim()) {
-        alert('Please fill in all fields before submitting.');
-        return;
-      }
+//   const handleCreateRequest = async () => {
+//     try {
+//       // Validate all fields are filled
+//       if (!formData.target_faculty_id || !formData.original_time_slot || !formData.requested_time_slot || !formData.requested_day || !formData.reason.trim()) {
+//         alert('Please fill in all fields before submitting.');
+//         return;
+//       }
 
-      const requestData = {
-        target_faculty_id: parseInt(formData.target_faculty_id),
-        original_time_slot: formData.original_time_slot,
-        requested_time_slot: formData.requested_time_slot,
-        requested_day: formData.requested_day,
-        reason: formData.reason.trim()
-      };
+//       const requestData = {
+//         target_faculty_id: parseInt(formData.target_faculty_id),
+//         original_time_slot: formData.original_time_slot,
+//         requested_time_slot: formData.requested_time_slot,
+//         requested_day: formData.requested_day,
+//         reason: formData.reason.trim()
+//       };
 
-      console.log('Sending swap request data:', requestData);
+//       console.log('Sending swap request data:', requestData);
 
-      await api.createSwapRequest(requestData);
-      loadSwapRequests();
-      setShowCreateModal(false);
-      setFormData({
-        target_faculty_id: '',
-        original_time_slot: '',
-        requested_time_slot: '',
-        requested_day: 'Monday',
-        reason: ''
-      });
-      alert('Swap request created successfully!');
-    } catch (error) {
-      console.error('Failed to create swap request:', error);
-      alert(`Failed to create swap request. Error: ${error.message}`);
-    }
-  };
+//       await api.createSwapRequest(requestData);
+//       loadSwapRequests();
+//       setShowCreateModal(false);
+//       setFormData({
+//         target_faculty_id: '',
+//         original_time_slot: '',
+//         requested_time_slot: '',
+//         requested_day: 'Monday',
+//         reason: ''
+//       });
+//       alert('Swap request created successfully!');
+//     } catch (error) {
+//       console.error('Failed to create swap request:', error);
+//       alert(`Failed to create swap request. Error: ${error.message}`);
+//     }
+//   };
 
-  const handleUpdateRequest = async (id, status, admin_notes = '') => {
-    try {
-      await api.updateSwapRequest(id, { status, admin_notes });
-      loadSwapRequests();
-    } catch (error) {
-      console.error('Failed to update swap request:', error);
-    }
-  };
+//   const handleUpdateRequest = async (id, status, admin_notes = '') => {
+//     try {
+//       await api.updateSwapRequest(id, { status, admin_notes });
+//       loadSwapRequests();
+//     } catch (error) {
+//       console.error('Failed to update swap request:', error);
+//     }
+//   };
 
-  const timeSlots = [
-    '09:00-10:00', '10:00-11:00', '11:00-12:00', '12:00-13:00',
-    '14:00-15:00', '15:00-16:00', '16:00-17:00'
-  ];
+//   const timeSlots = [
+//     '09:00-10:00', '10:00-11:00', '11:00-12:00', '12:00-13:00',
+//     '14:00-15:00', '15:00-16:00', '16:00-17:00'
+//   ];
 
-  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+//   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
-  if (loading) return <LoadingSpinner size="lg" />;
+//   if (loading) return <LoadingSpinner size="lg" />;
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Requests Management</h1>
-        {user?.role === 'faculty' && (
-          <Button onClick={() => {
-            setFormData({
-              target_faculty_id: '',
-              original_time_slot: '',
-              requested_time_slot: '',
-              requested_day: 'Monday',
-              reason: ''
-            });
-            setShowCreateModal(true);
-          }}>
-            <Plus className="w-4 h-4 mr-2" />
-            New Request
-          </Button>
-        )}
-      </div>
+//   return (
+//     <div className="space-y-6">
+//       <div className="flex items-center justify-between">
+//         <h1 className="text-3xl font-bold text-gray-900">Requests Management</h1>
+//         {user?.role === 'faculty' && (
+//           <Button onClick={() => {
+//             setFormData({
+//               target_faculty_id: '',
+//               original_time_slot: '',
+//               requested_time_slot: '',
+//               requested_day: 'Monday',
+//               reason: ''
+//             });
+//             setShowCreateModal(true);
+//           }}>
+//             <Plus className="w-4 h-4 mr-2" />
+//             New Request
+//           </Button>
+//         )}
+//       </div>
 
-      <Card>
-        <div className="border-b border-gray-200">
-          <nav className="flex space-x-8 px-6">
-            <button
-              onClick={() => setActiveTab('swap')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'swap'
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-            >
-              Swap Requests
-            </button>
-            <button
-              onClick={() => setActiveTab('leave')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'leave'
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-            >
-              Leave Requests
-            </button>
-          </nav>
-        </div>
+//       <Card>
+//         <div className="border-b border-gray-200">
+//           <nav className="flex space-x-8 px-6">
+//             <button
+//               onClick={() => setActiveTab('swap')}
+//               className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'swap'
+//                   ? 'border-indigo-500 text-indigo-600'
+//                   : 'border-transparent text-gray-500 hover:text-gray-700'
+//                 }`}
+//             >
+//               Swap Requests
+//             </button>
+//             <button
+//               onClick={() => setActiveTab('leave')}
+//               className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'leave'
+//                   ? 'border-indigo-500 text-indigo-600'
+//                   : 'border-transparent text-gray-500 hover:text-gray-700'
+//                 }`}
+//             >
+//               Leave Requests
+//             </button>
+//           </nav>
+//         </div>
 
-        <div className="p-6">
-          {activeTab === 'swap' && (
-            <div className="space-y-4">
-              {swapRequests.map((request) => (
-                <div key={request.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-4">
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">
-                            Faculty Swap Request #{request.id}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">{request.reason}</p>
-                          <p className="text-xs text-gray-400 mt-1">
-                            Original: {request.original_time_slot} → Requested: {request.requested_time_slot}
-                          </p>
-                          <p className="text-xs text-gray-400 mt-1">
-                            Created: {new Date(request.created_at).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${request.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          request.status === 'approved' ? 'bg-green-100 text-green-800' :
-                            'bg-red-100 text-red-800'
-                        }`}>
-                        {request.status}
-                      </span>
-                      {user?.role === 'admin' && request.status === 'pending' && (
-                        <div className="flex space-x-2">
-                          <Button
-                            size="sm"
-                            variant="success"
-                            onClick={() => handleUpdateRequest(request.id, 'approved')}
-                          >
-                            Approve
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="danger"
-                            onClick={() => handleUpdateRequest(request.id, 'rejected')}
-                          >
-                            Reject
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+//         <div className="p-6">
+//           {activeTab === 'swap' && (
+//             <div className="space-y-4">
+//               {swapRequests.map((request) => (
+//                 <div key={request.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+//                   <div className="flex items-center justify-between">
+//                     <div className="flex-1">
+//                       <div className="flex items-center space-x-4">
+//                         <div>
+//                           <p className="text-sm font-medium text-gray-900">
+//                             Faculty Swap Request #{request.id}
+//                           </p>
+//                           <p className="text-xs text-gray-500 mt-1">{request.reason}</p>
+//                           <p className="text-xs text-gray-400 mt-1">
+//                             Original: {request.original_time_slot} → Requested: {request.requested_time_slot}
+//                           </p>
+//                           <p className="text-xs text-gray-400 mt-1">
+//                             Created: {new Date(request.created_at).toLocaleDateString()}
+//                           </p>
+//                         </div>
+//                       </div>
+//                     </div>
+//                     <div className="flex items-center space-x-3">
+//                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${request.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+//                           request.status === 'approved' ? 'bg-green-100 text-green-800' :
+//                             'bg-red-100 text-red-800'
+//                         }`}>
+//                         {request.status}
+//                       </span>
+//                       {user?.role === 'admin' && request.status === 'pending' && (
+//                         <div className="flex space-x-2">
+//                           <Button
+//                             size="sm"
+//                             variant="success"
+//                             onClick={() => handleUpdateRequest(request.id, 'approved')}
+//                           >
+//                             Approve
+//                           </Button>
+//                           <Button
+//                             size="sm"
+//                             variant="danger"
+//                             onClick={() => handleUpdateRequest(request.id, 'rejected')}
+//                           >
+//                             Reject
+//                           </Button>
+//                         </div>
+//                       )}
+//                     </div>
+//                   </div>
+//                 </div>
+//               ))}
+//             </div>
+//           )}
 
-          {activeTab === 'leave' && (
-            <div className="text-center py-8 text-gray-500">
-              Leave requests functionality will be implemented based on backend support.
-            </div>
-          )}
-        </div>
-      </Card>
+//           {activeTab === 'leave' && (
+//             <div className="text-center py-8 text-gray-500">
+//               Leave requests functionality will be implemented based on backend support.
+//             </div>
+//           )}
+//         </div>
+//       </Card>
 
-      <Modal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        title="Create Swap Request"
-      >
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Target Faculty</label>
-            <select
-              value={formData.target_faculty_id}
-              onChange={(e) => setFormData({ ...formData, target_faculty_id: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="">Select Faculty</option>
-              {faculty.map((member) => (
-                <option key={member.id} value={member.id}>
-                  {member.name} ({member.department})
-                </option>
-              ))}
-            </select>
-          </div>
+//       <Modal
+//         isOpen={showCreateModal}
+//         onClose={() => setShowCreateModal(false)}
+//         title="Create Swap Request"
+//       >
+//         <div className="space-y-4">
+//           <div>
+//             <label className="block text-sm font-medium text-gray-700 mb-1">Target Faculty</label>
+//             <select
+//               value={formData.target_faculty_id}
+//               onChange={(e) => setFormData({ ...formData, target_faculty_id: e.target.value })}
+//               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+//             >
+//               <option value="">Select Faculty</option>
+//               {faculty.map((member) => (
+//                 <option key={member.id} value={member.id}>
+//                   {member.name} ({member.department})
+//                 </option>
+//               ))}
+//             </select>
+//           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Requested Day</label>
-            <select
-              value={formData.requested_day}
-              onChange={(e) => setFormData({ ...formData, requested_day: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-            >
-              {days.map((day) => (
-                <option key={day} value={day}>{day}</option>
-              ))}
-            </select>
-          </div>
+//           <div>
+//             <label className="block text-sm font-medium text-gray-700 mb-1">Requested Day</label>
+//             <select
+//               value={formData.requested_day}
+//               onChange={(e) => setFormData({ ...formData, requested_day: e.target.value })}
+//               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+//             >
+//               {days.map((day) => (
+//                 <option key={day} value={day}>{day}</option>
+//               ))}
+//             </select>
+//           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Original Time Slot</label>
-              <select
-                value={formData.original_time_slot}
-                onChange={(e) => setFormData({ ...formData, original_time_slot: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">Select Time</option>
-                {timeSlots.map((slot) => (
-                  <option key={slot} value={slot}>{slot}</option>
-                ))}
-              </select>
-            </div>
+//           <div className="grid grid-cols-2 gap-4">
+//             <div>
+//               <label className="block text-sm font-medium text-gray-700 mb-1">Original Time Slot</label>
+//               <select
+//                 value={formData.original_time_slot}
+//                 onChange={(e) => setFormData({ ...formData, original_time_slot: e.target.value })}
+//                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+//               >
+//                 <option value="">Select Time</option>
+//                 {timeSlots.map((slot) => (
+//                   <option key={slot} value={slot}>{slot}</option>
+//                 ))}
+//               </select>
+//             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Requested Time Slot</label>
-              <select
-                value={formData.requested_time_slot}
-                onChange={(e) => setFormData({ ...formData, requested_time_slot: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">Select Time</option>
-                {timeSlots.map((slot) => (
-                  <option key={slot} value={slot}>{slot}</option>
-                ))}
-              </select>
-            </div>
-          </div>
+//             <div>
+//               <label className="block text-sm font-medium text-gray-700 mb-1">Requested Time Slot</label>
+//               <select
+//                 value={formData.requested_time_slot}
+//                 onChange={(e) => setFormData({ ...formData, requested_time_slot: e.target.value })}
+//                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+//               >
+//                 <option value="">Select Time</option>
+//                 {timeSlots.map((slot) => (
+//                   <option key={slot} value={slot}>{slot}</option>
+//                 ))}
+//               </select>
+//             </div>
+//           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
-            <textarea
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-              rows="3"
-              value={formData.reason}
-              onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-              placeholder="Please provide a reason for the swap request..."
-            ></textarea>
-          </div>
+//           <div>
+//             <label className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
+//             <textarea
+//               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+//               rows="3"
+//               value={formData.reason}
+//               onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+//               placeholder="Please provide a reason for the swap request..."
+//             ></textarea>
+//           </div>
 
-          <div className="flex space-x-3 mt-6">
-            <Button onClick={handleCreateRequest}>
-              <Send className="w-4 h-4 mr-2" />
-              Submit Request
-            </Button>
-            <Button variant="secondary" onClick={() => setShowCreateModal(false)}>
-              Cancel
-            </Button>
-          </div>
-        </div>
-      </Modal>
-    </div>
-  );
-};
+//           <div className="flex space-x-3 mt-6">
+//             <Button onClick={handleCreateRequest}>
+//               <Send className="w-4 h-4 mr-2" />
+//               Submit Request
+//             </Button>
+//             <Button variant="secondary" onClick={() => setShowCreateModal(false)}>
+//               Cancel
+//             </Button>
+//           </div>
+//         </div>
+//       </Modal>
+//     </div>
+//   );
+// };
 
 // Analytics Component with Charts
 const Analytics = () => {
@@ -5713,22 +5707,9 @@ const Analytics = () => {
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
 
-  const api = new APIService();
+  const api = useMemo(() => new APIService(), []);
 
-  useEffect(() => {
-    loadRealTimeAnalytics();
-    
-    let interval;
-    if (autoRefresh) {
-      interval = setInterval(loadRealTimeAnalytics, 30000);
-    }
-    
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [selectedBatch, autoRefresh]);
-
-  const loadRealTimeAnalytics = async () => {
+  const loadRealTimeAnalytics = useCallback(async () => {
     try {
       const data = await api.getRealTimeAnalytics(selectedBatch === 'all' ? null : selectedBatch);
       setAnalytics(data);
@@ -5744,7 +5725,20 @@ const Analytics = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [api, selectedBatch]);
+
+  useEffect(() => {
+    loadRealTimeAnalytics();
+    
+    let interval;
+    if (autoRefresh) {
+      interval = setInterval(loadRealTimeAnalytics, 30000);
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [loadRealTimeAnalytics, autoRefresh]);
 
   if (loading) return <LoadingSpinner size="lg" />;
 
@@ -5992,7 +5986,8 @@ const ViewTabs = ({ activeView, setActiveView, suggestionsCount }) => {
 };
 
 const FacultySubjectAssignment = () => {
-    const api = new APIService();
+    const api = useMemo(() => new APIService(), []);
+    // eslint-disable-next-line no-unused-vars
     const { user } = useAuth();
     
     const [faculty, setFaculty] = useState([]);
@@ -6006,21 +6001,8 @@ const FacultySubjectAssignment = () => {
     const [showAssignModal, setShowAssignModal] = useState(false);
     const [showBulkAssignModal, setShowBulkAssignModal] = useState(false);
     const [selectedSubjects, setSelectedSubjects] = useState([]);
-    const [assignMode, setAssignMode] = useState('single'); // 'single' or 'bulk'
 
-    useEffect(() => {
-        loadFaculty();
-    }, []);
-
-    useEffect(() => {
-        if (selectedFaculty) {
-            loadFacultyDetails();
-            loadAvailableSubjects();
-            loadTeachingStats();
-        }
-    }, [selectedFaculty, filterDepartment]);
-
-    const loadFaculty = async () => {
+    const loadFaculty = useCallback(async () => {
         setLoading(true);
         try {
             const data = await api.getFaculty();
@@ -6031,9 +6013,9 @@ const FacultySubjectAssignment = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [api]);
 
-    const loadFacultyDetails = async () => {
+    const loadFacultyDetails = useCallback(async () => {
         if (!selectedFaculty) return;
         
         try {
@@ -6042,9 +6024,9 @@ const FacultySubjectAssignment = () => {
         } catch (error) {
             console.error('Failed to load faculty details:', error);
         }
-    };
+    }, [api, selectedFaculty]);
 
-    const loadAvailableSubjects = async () => {
+    const loadAvailableSubjects = useCallback(async () => {
         if (!selectedFaculty) return;
         
         try {
@@ -6056,9 +6038,9 @@ const FacultySubjectAssignment = () => {
         } catch (error) {
             console.error('Failed to load available subjects:', error);
         }
-    };
+    }, [api, selectedFaculty, filterDepartment]);
 
-    const loadTeachingStats = async () => {
+    const loadTeachingStats = useCallback(async () => {
         if (!selectedFaculty) return;
         
         try {
@@ -6067,7 +6049,19 @@ const FacultySubjectAssignment = () => {
         } catch (error) {
             console.error('Failed to load teaching stats:', error);
         }
-    };
+    }, [api, selectedFaculty]);
+
+    useEffect(() => {
+        loadFaculty();
+    }, [loadFaculty]);
+
+    useEffect(() => {
+        if (selectedFaculty) {
+            loadFacultyDetails();
+            loadAvailableSubjects();
+            loadTeachingStats();
+        }
+    }, [selectedFaculty, loadFacultyDetails, loadAvailableSubjects, loadTeachingStats]);
 
     const handleAssignSubject = async (subjectId, isPrimary = false) => {
         try {
@@ -7122,16 +7116,16 @@ const SmartSchedulerApp = () => {
       case 'my-timetable': return <FacultyMyTimetable />;    //NEW
       case 'faculty-subjects': return <FacultySubjectAssignment />; // NEW
       case 'swap-request' : return <AdvancedSwapRequestManagement />; //NEW
-      case 'optimization': return <EnhancedDashboard />;
+      // case 'optimization': return <EnhancedDashboard />;
       case 'leave': return <LeaveManagement />;
-      case 'timetable': return <Timetable />;
+      // case 'timetable': return <Timetable />;
       case 'multi-section': return <MultiSectionTimetable />;
       case 'multi-section-import': return <MultiSectionDataImport />;
       case 'faculty': return <FacultyManagement />;
       case 'students': return <StudentsManagement />;
       case 'rooms': return <RoomsManagement />;
       case 'subjects': return <SubjectsManagement />;
-      case 'requests': return <RequestsManagement />;
+      // case 'requests': return <RequestsManagement />;
       case 'analytics': return <Analytics />;
       case 'settings': return <SettingsPage />;
       default: return <Dashboard />;

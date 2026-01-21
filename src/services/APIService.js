@@ -19,7 +19,6 @@ class APIService {
   }
 
   async request(endpoint, options = {}) {
-    const currentToken = localStorage.getItem('token');
     const url = `${this.baseURL}${endpoint}`;
     const config = {
       headers: {
