@@ -5,7 +5,7 @@ import {
  Upload, Download, BarChart3, Grid, AlertCircle, CheckCircle,
   X, Save, Eye, EyeOff, Lock, RefreshCw, Send, Building,
   GraduationCap, Computer, Presentation, Mail, ArrowRight,
-  Info, ChevronUp,
+  Info, ChevronUp,Shield,
    Activity
 } from 'lucide-react';
 
@@ -439,6 +439,7 @@ import {
 // ==================== AUTHENTICATION (Moved to hooks/useAuth.js) ====================
 
 // Login Component
+// Login Component with Admin Registration
 const LoginForm = () => {
   const { login } = useAuth();
   const api = useMemo(() => new APIService(), []);
@@ -446,6 +447,7 @@ const LoginForm = () => {
   const [formData, setFormData] = useState({ username: '', password: '', role: 'student' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showAdminRegister, setShowAdminRegister] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -462,6 +464,11 @@ const LoginForm = () => {
     }
   };
 
+  // Show admin registration form
+  if (showAdminRegister) {
+    return <AdminRegistration onBack={() => setShowAdminRegister(false)} />;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <Card className="p-8 w-full max-w-md">
@@ -473,7 +480,7 @@ const LoginForm = () => {
           <p className="text-gray-600 mt-2">Classroom Management System</p>
         </div>
 
-        <div onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <Input
             label="Username"
             type="text"
@@ -511,11 +518,334 @@ const LoginForm = () => {
             </div>
           )}
 
-          <Button className="w-full" onClick={handleSubmit} disabled={loading}>
+          <Button type="submit" className="w-full" disabled={loading}>
             {loading ? 'Signing in...' : 'Sign In'}
           </Button>
+        </form>
+
+        {/* Admin Registration Link */}
+        <div className="mt-6 pt-6 border-t border-gray-200">
+          <div className="text-center">
+            <p className="text-sm text-gray-600 mb-2">
+              Need to create an admin account?
+            </p>
+            <button
+              onClick={() => setShowAdminRegister(true)}
+              className="text-indigo-600 hover:text-indigo-800 font-semibold text-sm"
+            >
+              Register as Administrator →
+            </button>
+          </div>
         </div>
       </Card>
+    </div>
+  );
+};
+
+// Admin Registration Component
+const AdminRegistration = ({ onBack }) => {
+  const [formData, setFormData] = useState({
+    username: '',
+    password: '',
+    confirmPassword: '',
+    email: '',
+    role: 'admin'
+  });
+  
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [validationErrors, setValidationErrors] = useState({});
+
+
+  // Validate form
+  const validateForm = () => {
+    const errors = {};
+    
+    if (!formData.username || formData.username.length < 3) {
+      errors.username = 'Username must be at least 3 characters';
+    }
+    
+    if (!formData.email || !formData.email.includes('@')) {
+      errors.email = 'Valid email is required';
+    }
+    
+    if (!formData.password || formData.password.length < 6) {
+      errors.password = 'Password must be at least 6 characters';
+    }
+    
+    if (formData.password !== formData.confirmPassword) {
+      errors.confirmPassword = 'Passwords do not match';
+    }
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    // Clear error when user types
+    if (validationErrors[name]) {
+      setValidationErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    
+    // Validate form
+    if (!validateForm()) {
+      setError('Please fix the errors below');
+      return;
+    }
+    
+    setLoading(true);
+    
+    try {
+      console.log('📤 Sending registration request...');
+      console.log('Data:', {
+        username: formData.username,
+        email: formData.email,
+        role: formData.role
+      });
+      
+      const response = await fetch('http://localhost:3000/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: formData.username,
+          password: formData.password,
+          email: formData.email,
+          role: formData.role
+        })
+      });
+      
+      console.log('📥 Response status:', response.status);
+      
+      const data = await response.json();
+      console.log('📥 Response data:', data);
+      
+      if (!response.ok) {
+        throw new Error(data.error || `Registration failed: ${response.status}`);
+      }
+      
+      // Success!
+      setSuccess(`Admin account created successfully! Username: ${formData.username}`);
+      setFormData({
+        username: '',
+        password: '',
+        confirmPassword: '',
+        email: '',
+        role: 'admin'
+      });
+      
+      // Show success message for 3 seconds, then redirect to login
+      setTimeout(() => {
+        console.log('✅ Registration successful. Redirecting to login...');
+        if (onBack) onBack();
+      }, 3000);
+      
+    } catch (err) {
+      console.error('❌ Registration error:', err);
+      setError(err.message || 'Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-full mb-4">
+            <Shield className="w-8 h-8 text-indigo-600" />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+            Create Admin Account
+          </h1>
+          <p className="text-gray-600">
+            Register a new administrator for the system
+          </p>
+        </div>
+
+        {/* Success Message */}
+        {success && (
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3">
+            <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-green-800 font-medium">Success!</p>
+              <p className="text-green-700 text-sm mt-1">{success}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-red-800 font-medium">Error</p>
+              <p className="text-red-700 text-sm mt-1">{error}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Registration Form */}
+        <form onSubmit={handleRegister} className="space-y-5">
+          {/* Username */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Username *
+            </label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition ${
+                  validationErrors.username ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                }`}
+                placeholder="Enter username"
+                disabled={loading}
+              />
+            </div>
+            {validationErrors.username && (
+              <p className="mt-1 text-sm text-red-600">{validationErrors.username}</p>
+            )}
+          </div>
+
+          {/* Email */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Email *
+            </label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition ${
+                  validationErrors.email ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                }`}
+                placeholder="admin@university.edu"
+                disabled={loading}
+              />
+            </div>
+            {validationErrors.email && (
+              <p className="mt-1 text-sm text-red-600">{validationErrors.email}</p>
+            )}
+          </div>
+
+          {/* Password */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Password *
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition ${
+                  validationErrors.password ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                }`}
+                placeholder="Min 6 characters"
+                disabled={loading}
+              />
+            </div>
+            {validationErrors.password && (
+              <p className="mt-1 text-sm text-red-600">{validationErrors.password}</p>
+            )}
+          </div>
+
+          {/* Confirm Password */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Confirm Password *
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="password"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition ${
+                  validationErrors.confirmPassword ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                }`}
+                placeholder="Re-enter password"
+                disabled={loading}
+              />
+            </div>
+            {validationErrors.confirmPassword && (
+              <p className="mt-1 text-sm text-red-600">{validationErrors.confirmPassword}</p>
+            )}
+          </div>
+
+          {/* Role (Hidden but set to admin) */}
+          <input type="hidden" name="role" value="admin" />
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-300 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <>
+                <RefreshCw className="w-5 h-5 animate-spin" />
+                Creating Account...
+              </>
+            ) : (
+              <>
+                <Shield className="w-5 h-5" />
+                Register Admin
+              </>
+            )}
+          </button>
+        </form>
+
+        {/* Back to Login Link */}
+        <div className="mt-6 text-center">
+          <p className="text-gray-600 text-sm">
+            Already have an account?{' '}
+            <button
+              onClick={onBack}
+              className="text-indigo-600 hover:text-indigo-700 font-semibold"
+            >
+              Back to Login
+            </button>
+          </p>
+        </div>
+
+        {/* Debug Info (Remove in production)
+        <div className="mt-6 p-4 bg-gray-50 rounded-lg text-xs">
+          <p className="font-semibold text-gray-700 mb-2">Debug Info:</p>
+          <div className="space-y-1 text-gray-600 font-mono">
+            <p>API: http://localhost:3000/api/auth/register</p>
+            <p>Method: POST</p>
+            <p>Role: {formData.role}</p>
+          </div>
+        </div> */}
+      </div>
     </div>
   );
 };
