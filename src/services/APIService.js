@@ -1,6 +1,6 @@
 class APIService {
   constructor() {
-    this.baseURL = 'http://localhost:3000/api';
+    this.baseURL = 'https://timetable-scheduling.onrender.com/api';
     // Get token dynamically each time
     this.token = localStorage.getItem('token');
     console.log('APIService initialized with token:', this.token ? 'exists' : 'missing');

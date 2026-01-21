@@ -618,7 +618,7 @@ const AdminRegistration = ({ onBack }) => {
         role: formData.role
       });
       
-      const response = await fetch('http://localhost:3000/api/auth/register', {
+      const response = await fetch('https://timetable-scheduling.onrender.com/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
